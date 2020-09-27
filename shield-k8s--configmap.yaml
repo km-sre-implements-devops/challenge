@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+data:
+  shield.enviroment: "develoment"
+metadata:
+  namespace: shield
+  name: shield-k8s-environment

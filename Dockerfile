@@ -24,7 +24,7 @@ ENV FLASK_APP=run.py
 #ej: develoment, stage, prod
 ENV FLASK_ENV="WILL_GIVEN_IN_DOCKER_RUN" 
 
-COPY meli_shield/ .
+COPY src/ .
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt --no-warn-script-location

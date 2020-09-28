@@ -11,22 +11,6 @@ import logging
 
 logging.root.setLevel(logging.INFO)
 
-welcome = """
-
-                                |\__/|
-        Welcome                /     \ 
-        to shield             /_.~ ~,_\ 
-                                 \@/
-
-        #################################
-        #          written by           #
-        #    k.michael@protonmail.ch    #
-        ################################# 
-
-"""
-logging.info(welcome)
-
-
 def token_required(f):
     @wraps(f)
     def decorator(*args, **kwargs):
@@ -50,6 +34,18 @@ def token_required(f):
 
 
 def request_ip_list(param):
+    """ Request a la url con una lista de ips tor
+
+    :param param: <variable_description>, defaults to <default_value>
+    :type <variable_name>: <variable_type>(, optional)
+    <other parameters and types>
+
+    :raises <error_type>: <error_description>
+    <other exceptions>
+
+    :rtype: <return_type>
+    :return: <return_description>
+    """    
     try:
         r = get('https://check.torproject.org/torbulkexitlist')
         if r.status_code == 403:

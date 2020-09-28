@@ -19,15 +19,15 @@ WORKDIR /home/${USER}/app
 ENV PATH=$HOME/.local/bin:$PATH
 
 ENV SECRET_KEY="WILL_GIVEN_IN_DOCKER_RUN" 
-ENV FLASK_APP=run.py
-
-#ej: develoment, stage, prod
 ENV FLASK_ENV="WILL_GIVEN_IN_DOCKER_RUN" 
 
 COPY src/ .
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt --no-warn-script-location
+RUN pip install --no-cache-dir --no-warn-script-location -r requirements.txt 
 
 EXPOSE 8080
+
 ENTRYPOINT ["python3", "run.py"]
+HEALTHCHECK --interval=5m --timeout=3s \
+  CMD curl -f http://localhost/shield/healthcheck || exit 1

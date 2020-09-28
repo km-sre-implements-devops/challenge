@@ -48,6 +48,7 @@ def request_ip_list(param):
     """    
     try:
         r = get('https://check.torproject.org/torbulkexitlist')
+        # Lista con bloqueo de request de 30min https://www.dan.me.uk/torlist/
         if r.status_code == 403:
             return {
                 "error":

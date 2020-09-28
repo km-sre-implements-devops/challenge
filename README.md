@@ -86,3 +86,8 @@ $ curl -L -X POST 'http://localhost:8080/shield/healthcheck' -H 'x-access-tokens
 
 $ cd k8s/
 $ kubectl appy -f .
+
+### AWS WAF
+
+Para implementar shield en cloud
+modificar waf rules con el script para blockear ip desde la blacklist y admitir ls de whitelist

@@ -3,10 +3,13 @@
 ## Shield use:
 
 $ git clone git@github.com:kmichael-devops/challenge.git
+
 $ docker build -t shield .
 
 Para levantar el contenedor , se debe proporcionar el variable de entorno SECRET_KEY
+
 $ export SECRET_KEY=contraseñaMuySecreta
+
 $ docker run -p 8080:8080 --name shield -e SECRET_KEY=${SECRET_KEY} -e FLASK_ENV=development -d shield
 
 
@@ -14,6 +17,7 @@ $ docker run -p 8080:8080 --name shield -e SECRET_KEY=${SECRET_KEY} -e FLASK_ENV
 #### El password debe ser entregado como variable de entorno
 
 $ export BASIC_AUTH_USER=admin BASIC_AUTH_PASSWORD=primer_password_sin_hash
+
 $ curl -L -X POST 'http://localhost:8080/shield/login' -H "Authorization: Basic $(echo -ne "$BASIC_AUTH_USER:$BASIC_AUTH_PASSWORD" | base64 --wrap 0)" -H "Content-Type: application/json"
 
 Shield devolvera un token para ser usado en las llamadas a la api.
@@ -27,6 +31,7 @@ Shield devolvera un token para ser usado en las llamadas a la api.
 #### Para hacer un request y traer blacklist completa
 
 Reemplazar TOKEN_FROM_LOGIN por token entregado por login
+
 $ curl -L -X POST 'http://localhost:8080/shield/out/blacklist' \
 -H 'x-access-tokens: TOKEN_FROM_LOGIN' \
 -H 'Content-Type:  application/json
@@ -85,6 +90,7 @@ $ curl -L -X POST 'http://localhost:8080/shield/healthcheck' -H 'x-access-tokens
 ### Kubernetes 3 replicas con service LB
 
 $ cd k8s/
+
 $ kubectl appy -f .
 
 ### AWS WAF

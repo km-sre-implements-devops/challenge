@@ -83,55 +83,95 @@ def index():
 @app.route('/shield/login', methods=['POST'])
 def get_login():
     auth = request.authorization
-
-    if not auth or not auth.username or not auth.password:
+    if auth:
+        user = Users.query.filter_by(username=auth.username).first()
+    else:
         return make_response(
-            'could not verify', 401,
+            'no user or password', 401,
             {'WWW.Authentication': 'Basic realm: "login required"'})
-    user = Users.query.filter_by(username=auth.username).first()
-    if check_password_hash(user.password, auth.password):
-        token = jwt.encode(
-            {
-                'id': user.id,
-                'exp': datetime.utcnow() + timedelta(minutes=30)
-            }, app.config['SECRET_KEY'])
-        return jsonify({'token': token.decode('UTF-8')})
-    return make_response(
-        'could not verify', 401,
-        {'WWW.Authentication': 'Basic realm: "login required"'})
+
+    if user:
+        if not auth or not auth.username or not auth.password:
+            return make_response(
+                'could not verify', 401,
+                {'WWW.Authentication': 'Basic realm: "login required"'})
+
+        if check_password_hash(user.password, auth.password):
+            token = jwt.encode(
+                {
+                    'id': user.id,
+                    'exp': datetime.utcnow() + timedelta(minutes=30)
+                }, app.config['SECRET_KEY'])
+            return jsonify({'token': token.decode('UTF-8')})
+        logging.error('########## Error password wrong')
+        return make_response(
+            'password wrong', 401,
+            {'WWW.Authentication': 'Basic realm: "login required"'})
+    else:
+        logging.error('########## Error user not found')
+        return make_response(
+            'user not found', 401,
+            {'WWW.Authentication': 'Basic realm: "login required"'})
 
 
-# Agrega ip a la whitelist
+# Agrega ip a whitelist en la base de datos, tambien puede manejar listas
 @app.route('/shield/in/whitelist', methods=['POST'])
 @token_required
 def add_ip_whitelist(ip):
     data = request.get_json()
+    num = len(data['ip'])
+    count_exists = 0
     try:
-        if not Whitelist.query.filter_by(ip=data['ip']).first():
-            list_of_ip = Whitelist(ip=data['ip'])
-            db.session.add(list_of_ip)
-            db.session.commit()
+        if isinstance(data['ip'], list):
+            already_exists = []
+            for ip in data['ip']:
+                if not Whitelist.query.filter_by(ip=ip).first():
+                    list_of_ip = Whitelist(ip=ip)
+                    db.session.add(list_of_ip)
+                    db.session.commit()
+
+                else:
+                    already_exists.append(ip)
+                    count_exists = count_exists + 1
+            if count_exists == num:
+                logging.warning(
+                    '########## IPs: {} already exists in whitelist'.format(
+                        data['ip']))
+                return {
+                    'error':
+                    'IPs: {} already exists in whitelist'.format(data['ip'])
+                }, 409
         else:
-            logging.warning(
-                '########## IP: {} already exists in whitelist'.format(
-                    data['ip']))
-            return {
-                'error':
-                'IP: {} already exists in whitelist'.format(data['ip'])
-            }, 409
+            if not Whitelist.query.filter_by(ip=data['ip']).first():
+                list_of_ip = Whitelist(ip=data['ip'])
+                db.session.add(list_of_ip)
+                db.session.commit()
+            else:
+                logging.warning(
+                    '########## IP: {} already exists in whitelist'.format(
+                        data['ip']))
+                return {
+                    'error':
+                    'IP: {} already exists in whitelist'.format(data['ip'])
+                }, 409
 
     except Exception as e:
         logging.exception(
             '########## Error adding ip {} to whitelist, Exception: {}'.format(
                 data['ip'], e))
         return {"error": 'Something went wrong'}, 500
-
-    return jsonify(
-        {'message': 'Ip: {} registered successfully'.format(data['ip'])}), 200
+    if already_exists:
+        return jsonify({
+            'message':
+            'success={}, already_exists={}'.format(num - count_exists,
+                                                   len(already_exists))
+        }), 200
+    else:
+        return jsonify({'message': 'success'}), 200
 
 
 # Devuelve todas las ip de la blacklist sin inclur las que estan en whitelist
-@app.route('/shield/out/all_blacklist', methods=['POST'])
+@app.route('/shield/out/blacklist', methods=['POST'])
 @token_required
 def get_all_blacklist(current_user):
 
@@ -140,9 +180,9 @@ def get_all_blacklist(current_user):
 
 
 # Entrega toda la blacklist sin las que estan en la whitelist
-@app.route('/shield/out/blacklist_without_whitelist', methods=['POST'])
+@app.route('/shield/out/blacklist_cleaned', methods=['POST'])
 @token_required
-def get_all_blacklist_without_whitelist(current_user):
+def get_all_blacklist_cleaned(current_user):
 
     try:
 

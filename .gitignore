@@ -1,5 +1,5 @@
 HELP.md
-/meli_shield/venv
+/src/venv
 
 # IDE - VSCode
 .vscode/*

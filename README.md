@@ -4,6 +4,8 @@
 
 $ git clone git@github.com:kmichael-devops/challenge.git
 
+$ cd challenge
+
 $ docker build -t shield .
 
 Para levantar el contenedor , se debe proporcionar el variable de entorno SECRET_KEY

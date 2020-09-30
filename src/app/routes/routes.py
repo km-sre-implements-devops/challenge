@@ -1,15 +1,16 @@
-from app import app, db
-from flask import jsonify, session, request, g, flash, make_response
-from werkzeug.security import generate_password_hash, check_password_hash
-from app.models.models import Users, Whitelist
 from datetime import datetime, timedelta
-from requests import get
-from functools import wraps
-import uuid
-import jwt
 import logging
+from functools import wraps
+from flask import jsonify, request, make_response
+from werkzeug.security import check_password_hash
+from requests import get
+import jwt
+
+from app.models.models import Users, Whitelist
+from app import app, db
 
 logging.root.setLevel(logging.INFO)
+
 
 def token_required(f):
     @wraps(f)
@@ -36,16 +37,15 @@ def token_required(f):
 def request_ip_list(param):
     """ Request a la url con una lista de ips tor
 
-    :param param: <variable_description>, defaults to <default_value>
-    :type <variable_name>: <variable_type>(, optional)
-    <other parameters and types>
+    :param variable param: Indica blacklist completa o filtrada con whitelist.
+    :type param: String
 
     :raises <error_type>: <error_description>
     <other exceptions>
 
-    :rtype: <return_type>
-    :return: <return_description>
-    """    
+    :rtype: List
+    :return: Retorna una lista de ips filtrada o completa.
+    """
     try:
         r = get('https://check.torproject.org/torbulkexitlist')
         # Lista con bloqueo de request de 30min https://www.dan.me.uk/torlist/
@@ -152,10 +152,10 @@ def add_ip_whitelist(ip):
                     'IP: {} already exists in whitelist'.format(data['ip'])
                 }, 409
 
-    except Exception as e:
+    except Exception as err:
         logging.exception(
             '########## Error adding ip {} to whitelist, Exception: {}'.format(
-                data['ip'], e))
+                data['ip'], err))
         return {"error": 'Something went wrong'}, 500
     if already_exists:
         return jsonify({
@@ -170,7 +170,7 @@ def add_ip_whitelist(ip):
 # Devuelve todas las ip de la blacklist sin inclur las que estan en whitelist
 @app.route('/shield/out/blacklist', methods=['POST'])
 @token_required
-def get_all_blacklist(current_user):
+def get_all_blacklist(*args):
 
     blacklist_json = request_ip_list("dirty")
     return blacklist_json
@@ -179,7 +179,7 @@ def get_all_blacklist(current_user):
 # Entrega toda la blacklist sin las que estan en la whitelist
 @app.route('/shield/out/blacklist_cleaned', methods=['POST'])
 @token_required
-def get_all_blacklist_cleaned(current_user):
+def get_all_blacklist_cleaned(*args):
 
     try:
 
@@ -195,9 +195,8 @@ def get_all_blacklist_cleaned(current_user):
         logging.exception('########## Error fetching data')
         return str(err)
 
-    finally:
-        json_response = {"blacklist_cleaned": blacklist_array}
-        return json_response
+    json_response = {"blacklist_cleaned": blacklist_array}
+    return json_response
 
 
 @app.route('/shield/info/', methods=['GET'])
